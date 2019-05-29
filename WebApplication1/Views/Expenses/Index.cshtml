@@ -1,0 +1,108 @@
+﻿@model IEnumerable<Expense>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+
+
+@section Scripts{
+    <script>
+        $(document).ready(function() {
+            $('.sort').on('click',
+                function() {
+                    var target = $(this);
+                    var asc = target.attr('data-asc');
+                    target.attr('data-asc', asc === "true" ? "false" : "true");
+                    $.ajax({
+                        type: "POST",
+                        url: "/api/expensesapi/sort",
+                        beforeSend: function(xhr) {
+                            xhr.setRequestHeader("XSRF-TOKEN",
+                                $('input:hidden[name="__RequestVerificationToken"]').val());
+                        },
+
+                        data: JSON.stringify({
+                            Field: target.attr('data-field'),
+                            IsAscendent: asc
+                        }),
+
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",   
+                        success: function(response) {
+
+                            console.log(response);
+                            $("#table > tr").remove();
+
+                            
+                            response.forEach(function(i, d) {
+
+                                var date = new Date(i.date);
+                                var dateStr =  date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear();
+
+                                var template =
+                                    `<tr>
+                                    <td>${i.amount}</td><td>${i.description}</td><td>${dateStr}</td><td>${i.type.description}</td><td><a href="/Expenses/Edit/${i.id}">Edit</a> |<a href="/Expenses/Details/${i.id}">Details</a> |<a href="/Expenses/Delete/${i.id}">Delete</a></td></tr>`;
+
+                                $("#table").append(template);
+                            });
+
+
+                        },
+                        failure: function(response) {
+                            alert(response);
+                        }
+                    });
+                });
+        });
+    </script>
+
+}
+
+<h2>Index</h2>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                <a href="#" class="sort" data-field="Amount" data-asc="true"> @Html.DisplayNameFor(model => model.Amount) </a>
+            </th>
+            <th>
+                <a href="#" class="sort" data-field="Description" data-asc="true"> @Html.DisplayNameFor(model => model.Description) </a>
+</th>
+            <th>
+                <a href="#" class="sort" data-field="Date" data-asc="true"> @Html.DisplayNameFor(model => model.Date) </a>
+</th>
+            <th>
+                <a href="#" class="sort" data-field="Type" data-asc="true"> @Html.DisplayNameFor(model => model.Type)  </a>
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="table">
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Amount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Description)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Date)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Type.Description)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
